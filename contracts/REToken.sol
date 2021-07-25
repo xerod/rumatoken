@@ -116,7 +116,21 @@ contract REFractional is ERC1155Holder {
      * Investor could buy some token by
      * specifying the tokenId
      */
-    function buyToken(uint256 _tokenAmount, uint256 _tokenId) public payable {}
+    function buyToken(uint256 _amount, uint256 _tokenId) public payable {
+        owner = REObjects[_tokenId].owner;
+
+        require(
+            (msg.value / _amount) >= REObjects[_tokenId].tokenPrice,
+            "Insufficient Fund"
+        );
+
+        require(
+            re.balanceOf(owner, _tokenId) >= _amount,
+            "Requested token exceed the available amount"
+        );
+
+        re.safeTransferFrom(owner, msg.sender, _tokenId, _amount, "");
+    }
 
     /**
      * Investor could see who the property owner is
