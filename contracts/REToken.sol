@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./ERC1155Enumerable.sol";
 
-contract REToken is ERC1155 {
+contract REToken is ERC1155Enumerable {
     constructor() ERC1155("https://realest.example/api/item/{id}.json") {}
 
     function mint(
@@ -18,6 +19,7 @@ contract REToken is ERC1155 {
     }
 }
 
+// Interact with ERC1155
 contract REFractional is ERC1155Holder {
     REToken re;
 
@@ -39,7 +41,6 @@ contract REFractional is ERC1155Holder {
      * Only property owner activity
      */
     modifier OnlyPropertyOwner(uint256 _tokenId) {
-        // require(msg.sender == re.REObjects(_tokenId), "Only property owner has access");
         require(
             msg.sender == REObjects[_tokenId].owner,
             "Only property owner has access"
@@ -50,7 +51,7 @@ contract REFractional is ERC1155Holder {
     /**
      * Only token holders activity
      */
-    modifier OnlyTokenHolders(uint256 _tokenId) {
+    modifier OnlyTokenHolder(uint256 _tokenId) {
         require(
             re.balanceOf(msg.sender, _tokenId) >= 0,
             "Only token holder has access"
@@ -77,7 +78,7 @@ contract REFractional is ERC1155Holder {
         // Mint the new token
         re.mint(_to, newItemId, _amount);
 
-        // Assign _to address as the propertyOwner
+        // Assign _to address as the property owner
         REObjects[newItemId].owner = _to;
 
         return newItemId;
@@ -133,22 +134,6 @@ contract REFractional is ERC1155Holder {
     }
 
     /**
-     * Investor could see who the property owner is
-     */
-    function getPropertyOwner(uint256 _tokenId)
-        public
-        OnlyTokenHolders(_tokenId)
-    {}
-
-    /**
-     * Investor could see list of other investors
-     */
-    function getAllHolders(uint256 _tokenId)
-        public
-        OnlyTokenHolders(_tokenId)
-    {}
-
-    /**
      * Fill some 💰 to this contract
      */
     function payRent(uint256 _tokenId) public payable {}
@@ -162,20 +147,9 @@ contract REFractional is ERC1155Holder {
     {}
 
     /**
-     * The contract itself distributing the profit to all
-     * token holders for every month.
+     * Investor could withdraw their profit for every month
      */
     function distributeMonthlyProfit(uint256 _tokenId) private {}
-
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC1155Received.selector;
-    }
 
     function getBalance() public view returns (uint256) {
         return address(this).balance;

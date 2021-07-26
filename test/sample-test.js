@@ -97,7 +97,9 @@ describe("Fractional Real Estate Ownership", function () {
         value: ethers.utils.parseEther("10.0"), // To convert Ether to Wei:
       };
 
-      const secureToken = await refractional.secureToken(10, 1, overrides);
+      const secureToken = await refractional
+        .connect(owner)
+        .secureToken(10, 1, overrides);
       await secureToken.wait();
     });
 
@@ -133,6 +135,14 @@ describe("Fractional Real Estate Ownership", function () {
 
       // owner wallet should be empty
       expect(await retoken.balanceOf(owner.address, tokenId)).equal(0);
+
+      // no guarantees on the ordering of values returned from getAllTokenOwner
+      expect(await retoken.getAllTokenOwner(tokenId)).to.have.members([
+        refractional.address,
+        user1.address,
+        user2.address,
+        user3.address,
+      ]);
     });
   });
 
