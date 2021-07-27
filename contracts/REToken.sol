@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "./ERC1155Enumerable.sol";
 
 contract REToken is ERC1155Enumerable {
@@ -22,7 +23,7 @@ contract REToken is ERC1155Enumerable {
 // Interact with ERC1155
 contract REFractional is ERC1155Holder {
     REToken re;
-    address owner;
+    address contractOwner;
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -81,7 +82,7 @@ contract REFractional is ERC1155Holder {
 
     constructor(address _token) {
         re = REToken(_token);
-        owner = _token;
+        contractOwner = msg.sender;
     }
 
     /**
@@ -92,6 +93,11 @@ contract REFractional is ERC1155Holder {
         public
         returns (uint256)
     {
+        require(
+            msg.sender == contractOwner,
+            "Only contract owner could mint token"
+        );
+
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 
@@ -141,7 +147,7 @@ contract REFractional is ERC1155Holder {
      * specifying the tokenId
      */
     function buyToken(uint256 _amount, uint256 _tokenId) public payable {
-        owner = realEstateObjects[_tokenId].owner;
+        address propertyOwner = realEstateObjects[_tokenId].owner;
 
         require(
             (msg.value / _amount) >= realEstateObjects[_tokenId].tokenPrice,
@@ -149,11 +155,11 @@ contract REFractional is ERC1155Holder {
         );
 
         require(
-            re.balanceOf(owner, _tokenId) >= _amount,
+            re.balanceOf(propertyOwner, _tokenId) >= _amount,
             "Requested token exceed the available amount"
         );
 
-        re.safeTransferFrom(owner, msg.sender, _tokenId, _amount, "");
+        re.safeTransferFrom(propertyOwner, msg.sender, _tokenId, _amount, "");
     }
 
     /**
@@ -174,15 +180,37 @@ contract REFractional is ERC1155Holder {
     {
         ethReserved[_tokenId] -= _amount;
 
-        // low-level call to send ether
-        (bool sent, ) = msg.sender.call{value: _amount}("");
-        require(sent, "Failed to send Ether");
+        // use Address library to send ether
+        Address.sendValue(payable(msg.sender), _amount);
+
+        // distribute profit to each token owner
+        distributeMonthlyProfit(_tokenId);
     }
 
     /**
-     * Investor could withdraw their profit for every month
+     * Distribute profit to each token owner
      */
-    function distributeMonthlyProfit(uint256 _tokenId) private {}
+    function distributeMonthlyProfit(uint256 _tokenId) private {
+        address[] memory addr = re.getAllTokenOwner(_tokenId);
+        uint256 totalProfit = ethReserved[_tokenId];
+
+        for (uint256 i = 0; i < addr.length; i++) {
+            address payable investor = payable(addr[i]);
+
+            if (investor == address(this)) {
+                investor = payable(realEstateObjects[_tokenId].owner);
+            }
+
+            uint256 amount = (re.balanceOf(investor, _tokenId) /
+                re.totalSupply(_tokenId)) * totalProfit;
+
+            // (bool sent, ) = investor.call{value: amount}("");
+            // require(sent, "Failed to send Ether");
+            Address.sendValue(investor, amount);
+
+            ethReserved[_tokenId] -= amount;
+        }
+    }
 
     // Function to receive Ether. msg.data must be empty
     receive() external payable {}

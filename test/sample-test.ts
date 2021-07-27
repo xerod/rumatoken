@@ -175,7 +175,7 @@ describe("Fractional Real Estate Ownership", function () {
     });
   });
 
-  describe("Property Owner Could Withdraw Operating Cost", () => {
+  describe("Property Owner Could Withdraw then Distribute Profit", () => {
     beforeEach(async () => {
       const overrides = {
         value: ethers.utils.parseEther("0.25"), // To convert Ether to Wei:
@@ -202,47 +202,61 @@ describe("Fractional Real Estate Ownership", function () {
         .withdrawOperationCost(ethers.utils.parseEther("0.1"), tokenId);
       await withdrawOperatingCost.wait();
 
-      // eth reserve should be 0.15
+      // eth reserve should be 0
       expect(await refractional.ethReserved(tokenId)).equal(
-        ethers.utils.parseEther("0.15")
+        ethers.utils.parseEther("0")
       );
 
-      // ether on contract should be 0.15 too
+      // ether on contract should be 0
       expect(await refractional.getBalance()).equal(
-        ethers.utils.parseEther("0.15")
+        ethers.utils.parseEther("0")
       );
+
+      // assuming there are new tenant made payment
+      const overrides = {
+        value: ethers.utils.parseEther("0.25"),
+      };
+
+      const payRent = await refractional.payRent(tokenId, overrides);
+      await payRent.wait();
 
       // withdrawing again with 0.05 token should fail
       await expect(
         refractional
           .connect(owner)
-          .withdrawOperationCost(ethers.utils.parseEther("0.05"), tokenId)
+          .withdrawOperationCost(ethers.utils.parseEther("0.1"), tokenId)
       ).to.be.revertedWith("Not allowed to withdraw more than once in a month");
     });
 
-    it("Should allow property owner to withdraw in ETH", async function () {
+    // Testing the balance difference on each investors are tricky,
+    // so to do it efficiently we check the profit are equally distributed by
+    // to getting the initial balance and ethReserved and make sure that
+    // at the end of the process the balance and ethReserve are 0.
+    it("Should allow property owner to withdraw and distribute profit in ETH", async function () {
+      // reserved ether should not be 0
+      expect(await refractional.ethReserved(tokenId)).not.equal(
+        ethers.utils.parseEther("0")
+      );
+
+      // ether on contract should not be 0
+      expect(await refractional.getBalance()).not.equal(
+        ethers.utils.parseEther("0")
+      );
+
       const withdrawOperatingCost = await refractional
         .connect(owner)
         .withdrawOperationCost(ethers.utils.parseEther("0.1"), tokenId);
       await withdrawOperatingCost.wait();
 
-      // reserved ether should be 0.15
+      // reserved ether should be 0
       expect(await refractional.ethReserved(tokenId)).equal(
-        ethers.utils.parseEther("0.15")
+        ethers.utils.parseEther("0")
       );
 
-      // ether on contract should be 0.15
+      // ether on contract should be 0
       expect(await refractional.getBalance()).equal(
-        ethers.utils.parseEther("0.15")
+        ethers.utils.parseEther("0")
       );
     });
-  });
-
-  describe("Contract Could Distribute Profit", () => {
-    it("Should allow contract to distribute profit to token owner", async function () {});
-  });
-
-  describe("Investor Could Transfer Token", () => {
-    it("Should allow contract to distribute profit to token owner", async function () {});
   });
 });
