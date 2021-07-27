@@ -33,7 +33,8 @@ contract REFractional is ERC1155Holder {
         uint256 tokenPrice;
     }
 
-    mapping(uint256 => RealEstate) public REObjects;
+    mapping(uint256 => RealEstate) public realEstateObjects;
+    mapping(uint256 => uint256) public ethReserved;
 
     address owner;
 
@@ -42,7 +43,7 @@ contract REFractional is ERC1155Holder {
      */
     modifier OnlyPropertyOwner(uint256 _tokenId) {
         require(
-            msg.sender == REObjects[_tokenId].owner,
+            msg.sender == realEstateObjects[_tokenId].owner,
             "Only property owner has access"
         );
         _;
@@ -79,7 +80,7 @@ contract REFractional is ERC1155Holder {
         re.mint(_to, newItemId, _amount);
 
         // Assign _to address as the property owner
-        REObjects[newItemId].owner = _to;
+        realEstateObjects[newItemId].owner = _to;
 
         return newItemId;
     }
@@ -104,13 +105,13 @@ contract REFractional is ERC1155Holder {
         // send to contract address
         re.safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "");
 
-        // add the secured value to REObjects
-        REObjects[_tokenId].securedAmount =
-            REObjects[_tokenId].securedAmount +
+        // add the secured value to realEstateObjects
+        realEstateObjects[_tokenId].securedAmount =
+            realEstateObjects[_tokenId].securedAmount +
             _amount;
 
         // calculate the price based on secured token
-        REObjects[_tokenId].tokenPrice = msg.value / _amount;
+        realEstateObjects[_tokenId].tokenPrice = msg.value / _amount;
     }
 
     /**
@@ -118,10 +119,10 @@ contract REFractional is ERC1155Holder {
      * specifying the tokenId
      */
     function buyToken(uint256 _amount, uint256 _tokenId) public payable {
-        owner = REObjects[_tokenId].owner;
+        owner = realEstateObjects[_tokenId].owner;
 
         require(
-            (msg.value / _amount) >= REObjects[_tokenId].tokenPrice,
+            (msg.value / _amount) >= realEstateObjects[_tokenId].tokenPrice,
             "Insufficient Fund"
         );
 
@@ -136,10 +137,13 @@ contract REFractional is ERC1155Holder {
     /**
      * Fill some 💰 to this contract
      */
-    function payRent(uint256 _tokenId) public payable {}
+    function payRent(uint256 _tokenId) public payable {
+        require(msg.value != 0, "Transferred fund can't be zero");
+        ethReserved[_tokenId] += msg.value;
+    }
 
     /**
-     * Property owner can ask for operating cost per month
+     * Property owner can ask for operating cost every month
      */
     function withdrawOperatingCost(uint256 _amount, uint256 _tokenId)
         public

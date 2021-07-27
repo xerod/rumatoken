@@ -22,25 +22,26 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface REFractionalInterface extends ethers.utils.Interface {
   functions: {
-    "REObjects(uint256)": FunctionFragment;
     "buyToken(uint256,uint256)": FunctionFragment;
+    "ethReserved(uint256)": FunctionFragment;
     "getBalance()": FunctionFragment;
     "mintUniqueTokenTo(address,uint256)": FunctionFragment;
     "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)": FunctionFragment;
     "onERC1155Received(address,address,uint256,uint256,bytes)": FunctionFragment;
     "payRent(uint256)": FunctionFragment;
+    "realEstateObjects(uint256)": FunctionFragment;
     "secureToken(uint256,uint256)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "withdrawOperatingCost(uint256,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "REObjects",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "buyToken",
     values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "ethReserved",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getBalance",
@@ -63,6 +64,10 @@ interface REFractionalInterface extends ethers.utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "realEstateObjects",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "secureToken",
     values: [BigNumberish, BigNumberish]
   ): string;
@@ -75,8 +80,11 @@ interface REFractionalInterface extends ethers.utils.Interface {
     values: [BigNumberish, BigNumberish]
   ): string;
 
-  decodeFunctionResult(functionFragment: "REObjects", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "buyToken", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "ethReserved",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getBalance", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "mintUniqueTokenTo",
@@ -91,6 +99,10 @@ interface REFractionalInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "payRent", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "realEstateObjects",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "secureToken",
     data: BytesLike
@@ -151,23 +163,16 @@ export class REFractional extends BaseContract {
   interface: REFractionalInterface;
 
   functions: {
-    REObjects(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, number, BigNumber, BigNumber] & {
-        owner: string;
-        securePeriod: number;
-        securedAmount: BigNumber;
-        tokenPrice: BigNumber;
-      }
-    >;
-
     buyToken(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    ethReserved(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     getBalance(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -200,6 +205,18 @@ export class REFractional extends BaseContract {
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    realEstateObjects(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, number, BigNumber, BigNumber] & {
+        owner: string;
+        securePeriod: number;
+        securedAmount: BigNumber;
+        tokenPrice: BigNumber;
+      }
+    >;
+
     secureToken(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
@@ -218,23 +235,16 @@ export class REFractional extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  REObjects(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [string, number, BigNumber, BigNumber] & {
-      owner: string;
-      securePeriod: number;
-      securedAmount: BigNumber;
-      tokenPrice: BigNumber;
-    }
-  >;
-
   buyToken(
     _amount: BigNumberish,
     _tokenId: BigNumberish,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  ethReserved(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   getBalance(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -267,6 +277,18 @@ export class REFractional extends BaseContract {
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  realEstateObjects(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [string, number, BigNumber, BigNumber] & {
+      owner: string;
+      securePeriod: number;
+      securedAmount: BigNumber;
+      tokenPrice: BigNumber;
+    }
+  >;
+
   secureToken(
     _amount: BigNumberish,
     _tokenId: BigNumberish,
@@ -285,23 +307,16 @@ export class REFractional extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    REObjects(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, number, BigNumber, BigNumber] & {
-        owner: string;
-        securePeriod: number;
-        securedAmount: BigNumber;
-        tokenPrice: BigNumber;
-      }
-    >;
-
     buyToken(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    ethReserved(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getBalance(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -331,6 +346,18 @@ export class REFractional extends BaseContract {
 
     payRent(_tokenId: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
+    realEstateObjects(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, number, BigNumber, BigNumber] & {
+        owner: string;
+        securePeriod: number;
+        securedAmount: BigNumber;
+        tokenPrice: BigNumber;
+      }
+    >;
+
     secureToken(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
@@ -352,15 +379,15 @@ export class REFractional extends BaseContract {
   filters: {};
 
   estimateGas: {
-    REObjects(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     buyToken(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    ethReserved(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getBalance(overrides?: CallOverrides): Promise<BigNumber>;
@@ -394,6 +421,11 @@ export class REFractional extends BaseContract {
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    realEstateObjects(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     secureToken(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
@@ -413,15 +445,15 @@ export class REFractional extends BaseContract {
   };
 
   populateTransaction: {
-    REObjects(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     buyToken(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    ethReserved(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getBalance(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -453,6 +485,11 @@ export class REFractional extends BaseContract {
     payRent(
       _tokenId: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    realEstateObjects(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     secureToken(

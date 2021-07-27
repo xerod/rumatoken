@@ -161,7 +161,13 @@ describe("Fractional Real Estate Ownership", function () {
   });
 
   describe("Tenant Could Pay Monthly Rent", () => {
-    it("Should allow anyone to pay rent", async function () {
+    it("Should fail if tenant pay 0 ETH", async function () {
+      await expect(refractional.payRent(tokenId)).to.be.revertedWith(
+        "Transferred fund can't be zero"
+      );
+    });
+
+    it("Should allow tenant to pay rent", async function () {
       const overrides = {
         value: ethers.utils.parseEther("0.25"), // To convert Ether to Wei:
       };
@@ -169,7 +175,13 @@ describe("Fractional Real Estate Ownership", function () {
       const payRent = await refractional.payRent(tokenId, overrides);
       await payRent.wait();
 
-      expect(await refractional.getBalance()).equal(ethers.utils.parseEther("0.25"));
+      expect(await refractional.getBalance()).equal(
+        ethers.utils.parseEther("0.25")
+      );
+
+      expect(await refractional.ethReserved(tokenId)).equal(
+        ethers.utils.parseEther("0.25")
+      );
     });
   });
 
