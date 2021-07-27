@@ -1,11 +1,19 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import { ethers, waffle } from "hardhat";
+import { ContractFactory } from "ethers";
+import { REFractional, REToken } from "../types/index";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-let RETOKEN;
-let retoken;
-let REFRACTIONAL;
-let refractional;
-let owner, user1, user2, user3;
+const { deployContract } = waffle;
+
+let RETOKEN: ContractFactory;
+let retoken: REToken;
+let REFRACTIONAL: ContractFactory;
+let refractional: REFractional;
+let owner: SignerWithAddress,
+  user1: SignerWithAddress,
+  user2: SignerWithAddress,
+  user3: SignerWithAddress;
 let tokenId = 1;
 
 describe("Fractional Real Estate Ownership", function () {
@@ -13,11 +21,11 @@ describe("Fractional Real Estate Ownership", function () {
     [owner, user1, user2, user3] = await ethers.getSigners();
 
     RETOKEN = await ethers.getContractFactory("REToken");
-    retoken = await RETOKEN.deploy();
+    retoken = (await RETOKEN.deploy()) as REToken;
     await retoken.deployed();
 
     REFRACTIONAL = await ethers.getContractFactory("REFractional");
-    refractional = await REFRACTIONAL.deploy(retoken.address);
+    refractional = (await REFRACTIONAL.deploy(retoken.address)) as REFractional;
     await refractional.deployed();
   });
 
@@ -125,13 +133,19 @@ describe("Fractional Real Estate Ownership", function () {
       };
 
       await refractional.connect(user1).buyToken(30, 1, overrides);
-      expect(await retoken.balanceOf(user1.address, tokenId)).equal(30);
+      expect(await retoken.balanceOf(await user1.getAddress(), tokenId)).equal(
+        30
+      );
 
       await refractional.connect(user2).buyToken(30, 1, overrides);
-      expect(await retoken.balanceOf(user2.address, tokenId)).equal(30);
+      expect(await retoken.balanceOf(await user2.getAddress(), tokenId)).equal(
+        30
+      );
 
       await refractional.connect(user3).buyToken(30, 1, overrides);
-      expect(await retoken.balanceOf(user3.address, tokenId)).equal(30);
+      expect(await retoken.balanceOf(await user3.getAddress(), tokenId)).equal(
+        30
+      );
 
       // owner wallet should be empty
       expect(await retoken.balanceOf(owner.address, tokenId)).equal(0);
