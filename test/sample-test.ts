@@ -161,8 +161,16 @@ describe("Fractional Real Estate Ownership", function () {
   });
 
   describe("Tenant Could Pay Monthly Rent", () => {
-    it("Should allow anyone to pay rent", async function () {});
-    it("Should allow property owner to view payment made by all tenant", async function () {});
+    it("Should allow anyone to pay rent", async function () {
+      const overrides = {
+        value: ethers.utils.parseEther("0.25"), // To convert Ether to Wei:
+      };
+
+      const payRent = await refractional.payRent(tokenId, overrides);
+      await payRent.wait();
+
+      expect(await refractional.getBalance()).equal(ethers.utils.parseEther("0.25"));
+    });
   });
 
   describe("Property Owner Could Withdraw Operating Cost", () => {
