@@ -27,18 +27,20 @@ describe("Fractional Real Estate Ownership", function () {
     REFRACTIONAL = await ethers.getContractFactory("REFractional");
     refractional = (await REFRACTIONAL.deploy(retoken.address)) as REFractional;
     await refractional.deployed();
+
+    await retoken.connect(owner).setApprovalForAll(refractional.address, true);
+
+    const mintUniqueTokenTo = await refractional.mintUniqueTokenTo(
+      owner.address,
+      100
+    );
+
+    // wait until the transaction is mined
+    await mintUniqueTokenTo.wait();
   });
 
   describe("Property Owner Could Mint 100 Property Token", () => {
     it("Should mint 100 token in supply", async function () {
-      const mintUniqueTokenTo = await refractional.mintUniqueTokenTo(
-        owner.address,
-        100
-      );
-
-      // wait until the transaction is mined
-      await mintUniqueTokenTo.wait();
-
       expect(await retoken.balanceOf(owner.address, tokenId)).to.equal(100);
     });
   });
@@ -89,18 +91,6 @@ describe("Fractional Real Estate Ownership", function () {
 
   describe("Investor Could Buy the Property Token", () => {
     beforeEach(async () => {
-      await retoken
-        .connect(owner)
-        .setApprovalForAll(refractional.address, true);
-
-      const mintUniqueTokenTo = await refractional.mintUniqueTokenTo(
-        owner.address,
-        100
-      );
-
-      // wait until the transaction is mined
-      await mintUniqueTokenTo.wait();
-
       const overrides = {
         value: ethers.utils.parseEther("10.0"), // To convert Ether to Wei:
       };
@@ -186,9 +176,66 @@ describe("Fractional Real Estate Ownership", function () {
   });
 
   describe("Property Owner Could Withdraw Operating Cost", () => {
-    it("Should not allow property owner to withdraw more than 50% of the available fund", async function () {});
-    it("Should allow property owner to withdraw operating cost in ETH", async function () {});
-    it("Should not allow property owner to withdraw operating cost more than once a month", async function () {});
+    beforeEach(async () => {
+      const overrides = {
+        value: ethers.utils.parseEther("0.25"), // To convert Ether to Wei:
+      };
+
+      const payRent = await refractional.payRent(tokenId, overrides);
+      await payRent.wait();
+    });
+
+    it("Should fail when property owner withdraw more than 50% of the available fund", async function () {
+      await expect(
+        refractional
+          .connect(owner)
+          .withdrawOperationCost(ethers.utils.parseEther("0.25"), tokenId)
+      ).to.be.revertedWith(
+        "Withdrawing more than 50% of reserved ETH are not allowed"
+      );
+    });
+
+    it("Should fail when property owner withdraw more than once in a month", async function () {
+      // withdrawing 0.1 token
+      const withdrawOperatingCost = await refractional
+        .connect(owner)
+        .withdrawOperationCost(ethers.utils.parseEther("0.1"), tokenId);
+      await withdrawOperatingCost.wait();
+
+      // eth reserve should be 0.15
+      expect(await refractional.ethReserved(tokenId)).equal(
+        ethers.utils.parseEther("0.15")
+      );
+
+      // ether on contract should be 0.15 too
+      expect(await refractional.getBalance()).equal(
+        ethers.utils.parseEther("0.15")
+      );
+
+      // withdrawing again with 0.05 token should fail
+      await expect(
+        refractional
+          .connect(owner)
+          .withdrawOperationCost(ethers.utils.parseEther("0.05"), tokenId)
+      ).to.be.revertedWith("Not allowed to withdraw more than once in a month");
+    });
+
+    it("Should allow property owner to withdraw in ETH", async function () {
+      const withdrawOperatingCost = await refractional
+        .connect(owner)
+        .withdrawOperationCost(ethers.utils.parseEther("0.1"), tokenId);
+      await withdrawOperatingCost.wait();
+
+      // reserved ether should be 0.15
+      expect(await refractional.ethReserved(tokenId)).equal(
+        ethers.utils.parseEther("0.15")
+      );
+
+      // ether on contract should be 0.15
+      expect(await refractional.getBalance()).equal(
+        ethers.utils.parseEther("0.15")
+      );
+    });
   });
 
   describe("Contract Could Distribute Profit", () => {

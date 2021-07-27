@@ -32,7 +32,7 @@ interface REFractionalInterface extends ethers.utils.Interface {
     "realEstateObjects(uint256)": FunctionFragment;
     "secureToken(uint256,uint256)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
-    "withdrawOperatingCost(uint256,uint256)": FunctionFragment;
+    "withdrawOperationCost(uint256,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -76,7 +76,7 @@ interface REFractionalInterface extends ethers.utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdrawOperatingCost",
+    functionFragment: "withdrawOperationCost",
     values: [BigNumberish, BigNumberish]
   ): string;
 
@@ -112,7 +112,7 @@ interface REFractionalInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "withdrawOperatingCost",
+    functionFragment: "withdrawOperationCost",
     data: BytesLike
   ): Result;
 
@@ -209,11 +209,12 @@ export class REFractional extends BaseContract {
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
-      [string, number, BigNumber, BigNumber] & {
+      [string, number, BigNumber, BigNumber, BigNumber] & {
         owner: string;
         securePeriod: number;
         securedAmount: BigNumber;
         tokenPrice: BigNumber;
+        withdrawTimestamp: BigNumber;
       }
     >;
 
@@ -228,7 +229,7 @@ export class REFractional extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    withdrawOperatingCost(
+    withdrawOperationCost(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -281,11 +282,12 @@ export class REFractional extends BaseContract {
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<
-    [string, number, BigNumber, BigNumber] & {
+    [string, number, BigNumber, BigNumber, BigNumber] & {
       owner: string;
       securePeriod: number;
       securedAmount: BigNumber;
       tokenPrice: BigNumber;
+      withdrawTimestamp: BigNumber;
     }
   >;
 
@@ -300,7 +302,7 @@ export class REFractional extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  withdrawOperatingCost(
+  withdrawOperationCost(
     _amount: BigNumberish,
     _tokenId: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -350,11 +352,12 @@ export class REFractional extends BaseContract {
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
-      [string, number, BigNumber, BigNumber] & {
+      [string, number, BigNumber, BigNumber, BigNumber] & {
         owner: string;
         securePeriod: number;
         securedAmount: BigNumber;
         tokenPrice: BigNumber;
+        withdrawTimestamp: BigNumber;
       }
     >;
 
@@ -369,7 +372,7 @@ export class REFractional extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    withdrawOperatingCost(
+    withdrawOperationCost(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -437,7 +440,7 @@ export class REFractional extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    withdrawOperatingCost(
+    withdrawOperationCost(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -503,7 +506,7 @@ export class REFractional extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    withdrawOperatingCost(
+    withdrawOperationCost(
       _amount: BigNumberish,
       _tokenId: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }

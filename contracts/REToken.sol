@@ -22,6 +22,7 @@ contract REToken is ERC1155Enumerable {
 // Interact with ERC1155
 contract REFractional is ERC1155Holder {
     REToken re;
+    address owner;
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -31,12 +32,11 @@ contract REFractional is ERC1155Holder {
         uint8 securePeriod;
         uint256 securedAmount;
         uint256 tokenPrice;
+        uint256 withdrawTimestamp;
     }
 
     mapping(uint256 => RealEstate) public realEstateObjects;
     mapping(uint256 => uint256) public ethReserved;
-
-    address owner;
 
     /**
      * Only property owner activity
@@ -57,6 +57,25 @@ contract REFractional is ERC1155Holder {
             re.balanceOf(msg.sender, _tokenId) >= 0,
             "Only token holder has access"
         );
+        _;
+    }
+
+    modifier WithdrawEnabled(uint256 _amount, uint256 _tokenId) {
+        require(_amount > 0, "Can't withdraw 0 ETH");
+
+        require(
+            _amount < (ethReserved[_tokenId] / 2),
+            "Withdrawing more than 50% of reserved ETH are not allowed"
+        );
+
+        require(
+            block.timestamp >= realEstateObjects[_tokenId].withdrawTimestamp,
+            "Not allowed to withdraw more than once in a month"
+        );
+
+        realEstateObjects[_tokenId].withdrawTimestamp =
+            block.timestamp +
+            4 weeks;
         _;
     }
 
@@ -81,6 +100,9 @@ contract REFractional is ERC1155Holder {
 
         // Assign _to address as the property owner
         realEstateObjects[newItemId].owner = _to;
+
+        // Add a minted timestamp
+        realEstateObjects[newItemId].withdrawTimestamp = block.timestamp;
 
         return newItemId;
     }
@@ -145,15 +167,28 @@ contract REFractional is ERC1155Holder {
     /**
      * Property owner can ask for operating cost every month
      */
-    function withdrawOperatingCost(uint256 _amount, uint256 _tokenId)
+    function withdrawOperationCost(uint256 _amount, uint256 _tokenId)
         public
         OnlyPropertyOwner(_tokenId)
-    {}
+        WithdrawEnabled(_amount, _tokenId)
+    {
+        ethReserved[_tokenId] -= _amount;
+
+        // low-level call to send ether
+        (bool sent, ) = msg.sender.call{value: _amount}("");
+        require(sent, "Failed to send Ether");
+    }
 
     /**
      * Investor could withdraw their profit for every month
      */
     function distributeMonthlyProfit(uint256 _tokenId) private {}
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is exist
+    fallback() external payable {}
 
     function getBalance() public view returns (uint256) {
         return address(this).balance;
